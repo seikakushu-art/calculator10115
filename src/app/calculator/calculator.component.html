@@ -1,0 +1,45 @@
+<p>calculator works!</p>
+<div class="calculator">
+  <div class="display">{{ display }}</div>
+
+  <div class="buttons">
+    <!-- 左側（演算子系） -->
+    <div class="left-ops">
+      <button (click)="percent()">%</button>
+      <button (click)="root()">√</button>
+      <button class="clear" (click)="clear()">C</button>
+    </div>
+
+    <!-- 中央（数字系） -->
+    <div class="numbers">
+      <button (click)="inputdigit('7')">7</button>
+      <button (click)="inputdigit('8')">8</button>
+      <button (click)="inputdigit('9')">9</button>
+
+      <button (click)="inputdigit('4')">4</button>
+      <button (click)="inputdigit('5')">5</button>
+      <button (click)="inputdigit('6')">6</button>
+
+      <button (click)="inputdigit('1')">1</button>
+      <button (click)="inputdigit('2')">2</button>
+      <button (click)="inputdigit('3')">3</button>
+
+      <button (click)="inputdigit('0')">0</button>
+      <button (click)="inputdecimal()">.</button>
+      <button (click)="togglenegative()">±</button>  
+    </div>
+
+    <!-- 右側（演算子） -->
+    <div class="right-ops">
+      <button (click)="handleoperator('/')">÷</button>
+      <button (click)="handleoperator('*')">×</button>
+      <button (click)="handleoperator('-')">−</button>
+      <button (click)="handleoperator('+')">＋</button>
+    </div>
+  </div>
+  <!-- ＝ボタン -->
+  <div class="equal-row">
+    <button class="equal" (click)="calculateresult()">＝</button>
+  </div>
+  </div>
+  
