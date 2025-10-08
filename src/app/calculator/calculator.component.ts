@@ -69,7 +69,6 @@ private appendDigit(digit:string):boolean{//桁数の制限ルール
 
   
 inputdigit(digit:string) :void{//数値を入力する
-  console.log('数値待ち状態フラグ',this.waitingForSecondValue);
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = digit;
@@ -113,8 +112,6 @@ inputdecimal():void{//小数点を入力する
   }
 }
 handleoperator(nextOperator:string){//演算子を入力する
-  console.log('数値待ち状態フラグ',this.waitingForSecondValue);
-  console.log('第一の数値',this.firstvalue);
   if(this.isError === true){
     this.clearError();
     this.display = '0';
@@ -141,7 +138,6 @@ handleoperator(nextOperator:string){//演算子を入力する
   this.equalpressed = false;
   this.lastvalue = null;
 
-  console.log('入力数値',inputvalue);
   if(this.waitingForSecondValue===true){//次の数値入力待ち
     this.operator = nextOperator;//演算子を入れ替え
     this.reciprocalMode = false;
@@ -173,14 +169,6 @@ togglenegative(){//±を切り替える
     }
 }
 percent(){//パーセントを計算する
-  console.log('数値待ち状態フラグ',this.waitingForSecondValue);
-  console.log('第一の数値',this.firstvalue);
-  console.log('第二の数値',this.lastvalue);
-  console.log('演算子',this.operator);
-  console.log('定数モード',this.constantMode);
-  console.log('等号押下フラグ',this.equalpressed);
-  console.log('逆数モードフラグ',this.reciprocalMode);
-  console.log('乗数定数',this.mulconstant);
 
   if(this.isError === true){//errorの時
     this.clearError();
@@ -262,9 +250,6 @@ percent(){//パーセントを計算する
       this.constantMode = false;
       }
 root(){//平方根を計算する
-  console.log('第一の数値',this.firstvalue);
-  console.log('lastvalue',this.lastvalue);
-  console.log('演算子',this.operator);
 
   if(this.isError === true){//errorの時
     this.clearError();
@@ -307,14 +292,6 @@ root(){//平方根を計算する
     this.equalpressed = false;
   }
 calculateresult(){//＝を押した時の処理
-  console.log('数値待ち状態フラグ',this.waitingForSecondValue);
-  console.log('第一の数値',this.firstvalue);
-  console.log('lastvalue',this.lastvalue);
-  console.log('演算子',this.operator);
-  console.log('定数モード',this.constantMode);
-  console.log('等号押下フラグ',this.equalpressed);
-  console.log('逆数モードフラグ',this.reciprocalMode);
-  console.log('乗数定数',this.mulconstant);
 
 
   if(this.isError === true){//errorの時
@@ -323,7 +300,6 @@ calculateresult(){//＝を押した時の処理
     return;
   }
   const inputvalue = this.displayValue;//数値として取得
-  console.log('入力数値',inputvalue);
   if(this.operator==='/'&&this.waitingForSecondValue===true&&this.reciprocalMode===false&& this.lastvalue===null){//逆数モードの判定
     this.reciprocalMode = true;
   }
