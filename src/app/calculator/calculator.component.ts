@@ -46,6 +46,15 @@ private clearError():void{//error状態のクリア
   this.waitingForSecondValue = false;
   this.equalpressed = false;
   this.mulconstant = null;
+  this.firstvalue = null;
+  this.lastvalue = null;
+  this.percentvalue = null;
+  this.operator = null;
+  this.constantMode = false;
+  this.reciprocalMode = false;
+  this.waitingForSecondValue = false;
+  this.equalpressed = false;
+  this.mulconstant = null;
   }
 }
 private appendDigit(digit:string):boolean{//桁数の制限ルール
@@ -67,6 +76,16 @@ inputdigit(digit:string) :void{//数値を入力する
     return;
   }
   if(this.waitingForSecondValue===true){//2つ目の数値入力の分岐
+    if(this.percentvalue!==null){
+      this.firstvalue = null;
+      this.lastvalue = null;
+      this.operator = null;
+      this.equalpressed = false;
+      this.constantMode = false;
+      this.reciprocalMode = false;
+      this.mulconstant = null;
+      this.percentvalue = null;
+    }
     this.display = digit;
     this.waitingForSecondValue = false;
     return;
@@ -107,6 +126,21 @@ handleoperator(nextOperator:string){//演算子を入力する
   this.lastvalue = null;
 
   const inputvalue = this.displayValue;//数値として取得
+  if(this.equalpressed&&this.constantMode&&this.firstvalue!==null){//=数字、演算子の順番で押したら、新規計算
+    this.firstvalue = inputvalue;
+    this.lastvalue = null;
+    this.operator = nextOperator;
+    this.waitingForSecondValue = true;
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.equalpressed = false;
+    return;
+  }
+  this.constantMode = false;//各状態のリセット
+  this.reciprocalMode = false;
+  this.equalpressed = false;
+  this.lastvalue = null;
+
   console.log('入力数値',inputvalue);
   if(this.waitingForSecondValue===true){//次の数値入力待ち
     this.operator = nextOperator;//演算子を入れ替え
@@ -117,7 +151,7 @@ if(this.firstvalue !== null&&this.operator){//数値あり、演算子あり
   const result = this.calculate(this.operator,this.firstvalue,inputvalue);
   this.display = this.formatnumber(result);
   this.firstvalue = result;
-  this.lastvalue = inputvalue;
+  this.lastvalue = (nextOperator==='/')?null:inputvalue;
 }else{//演算子なし、数値あり
   this.firstvalue = inputvalue;
   this.lastvalue = null;
@@ -139,6 +173,15 @@ togglenegative(){//±を切り替える
     }
 }
 percent(){//パーセントを計算する
+  console.log('数値待ち状態フラグ',this.waitingForSecondValue);
+  console.log('第一の数値',this.firstvalue);
+  console.log('第二の数値',this.lastvalue);
+  console.log('演算子',this.operator);
+  console.log('定数モード',this.constantMode);
+  console.log('等号押下フラグ',this.equalpressed);
+  console.log('逆数モードフラグ',this.reciprocalMode);
+  console.log('乗数定数',this.mulconstant);
+
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = '0';
@@ -149,28 +192,53 @@ percent(){//パーセントを計算する
     this.ErrorSet('Error');
     return;
   }
-    if(this.operator && this.firstvalue!==null){//演算子あり、数値あり
-    let result:number;
+
+  //特殊モード中に％を押した場合
+  if((this.constantMode===true&&this.equalpressed===true)||this.reciprocalMode===true){
+    const result = inputvalue / 100;
+    this.display = this.formatnumber(result);
+    //状態をクリア
+    this.firstvalue = result;
+    this.lastvalue = null;
+    this.percentvalue = null;
+    this.operator = null;
+    this.waitingForSecondValue = false;
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.equalpressed = false;
+    this.mulconstant = null;
+    return;
+  }
+    if(this.operator && this.firstvalue!==null){
     if(this.percentvalue === null){
       this.percentvalue = inputvalue;
     }
     const percentinput = this.percentvalue;
+    const basevalue = this.firstvalue;
+    let result:number;
+    let newLastvalue:number|null=null;
+
     switch(this.operator){
       case '+':
-        result = this.firstvalue +(this.firstvalue * (percentinput / 100));
+        newLastvalue = basevalue * (percentinput / 100);
+        result = basevalue + newLastvalue;
         break;
       case '-':
-        result = this.firstvalue -(this.firstvalue * (percentinput / 100));
+        newLastvalue = basevalue * (percentinput / 100);
+        result = basevalue - newLastvalue;
         break;
       case '*':
-        result = this.firstvalue * (percentinput / 100);
+        result = basevalue * (percentinput / 100);
+        newLastvalue = basevalue;
+        this.mulconstant = basevalue;
         break;
       case '/':
         if(percentinput === 0){
           this.ErrorSet('Error');
           return;
         }
-        result = this.firstvalue / (percentinput / 100);
+        result = basevalue / (percentinput / 100);
+        newLastvalue = basevalue*(percentinput / 100);
         break;
         default:
           this.ErrorSet('Error');
@@ -180,15 +248,24 @@ percent(){//パーセントを計算する
       this.display = this.formatnumber(result);
       this.waitingForSecondValue = true;
       this.firstvalue = result;
+      this.lastvalue = newLastvalue;
+      this.constantMode = true;
+      this.equalpressed = false;
     }
-    }else{
+    return;
+  }
       const result = inputvalue / 100;
       this.display = this.formatnumber(result);
       this.firstvalue = result;
       this.percentvalue = null;
+      this.lastvalue = null;
+      this.constantMode = false;
       }
-    }
 root(){//平方根を計算する
+  console.log('第一の数値',this.firstvalue);
+  console.log('lastvalue',this.lastvalue);
+  console.log('演算子',this.operator);
+
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = '0';
@@ -200,21 +277,34 @@ root(){//平方根を計算する
     return;
   }
   const rootvalue = Math.sqrt(inputvalue);
-  this.display = this.formatnumber(rootvalue);
-  this.equalpressed = false;//定数モードのリセット
-  if(this.operator!==null){
+  if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時
+    this.display = this.formatnumber(rootvalue);
+    this.firstvalue = rootvalue;
+    this.lastvalue = null;
+    this.operator = null;
+    this.waitingForSecondValue = false;
+    this.equalpressed = false;
+    this.constantMode = false;
+    return;
+  }
+  if(this.operator!==null){//演算子がある時
     if(this.waitingForSecondValue===true){
-      this.firstvalue =rootvalue;
-      this.waitingForSecondValue = true;
-    }else{
+      this.display = this.formatnumber(rootvalue);
       this.lastvalue = rootvalue;
       this.waitingForSecondValue = false;
+    }else{
+      this.display = this.formatnumber(rootvalue);
+      this.lastvalue = rootvalue;
     }
-  }else{//個別計算
+    this.equalpressed = false;
+    return;
+    }
+  //個別計算
+    this.display = this.formatnumber(rootvalue);
     this.firstvalue = rootvalue;
-    this.waitingForSecondValue = false;
-  }
-   this.lastvalue = rootvalue;
+    this.lastvalue = null;
+    this.waitingForSecondValue = true;
+    this.equalpressed = false;
   }
 calculateresult(){//＝を押した時の処理
   console.log('数値待ち状態フラグ',this.waitingForSecondValue);
@@ -251,6 +341,12 @@ calculateresult(){//＝を押した時の処理
       const result = 1/inputvalue;
       this.display = this.formatnumber(result);
       this.firstvalue = result;
+      this.operator = '/';
+      this.lastvalue = inputvalue;
+      this.waitingForSecondValue = true;
+      this.constantMode = true;
+      this.reciprocalMode = false;
+      return;
     }
     this.waitingForSecondValue = true;
     this.constantMode = true;
@@ -282,7 +378,7 @@ calculateresult(){//＝を押した時の処理
       if(newInputAfterEqual===true){
         left = (this.mulconstant??this.firstvalue);
         right = inputvalue;
-        this.lastvalue = right;
+        this.lastvalue = left;
       }else{//=を連打した時
         left = this.firstvalue;
         right = this.lastvalue??inputvalue;
