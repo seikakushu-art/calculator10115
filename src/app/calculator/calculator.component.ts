@@ -231,6 +231,7 @@ percent(){//パーセントを計算する
       const result = inputvalue / 100;//数値だけ％計算をする時
       this.display = this.formatnumber(result);
       this.firstvalue = result;
+      this.waitingForSecondValue = true;
       this.percentvalue = null;
       this.lastvalue = null;
       this.constantMode = false;
