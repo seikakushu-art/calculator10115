@@ -20,7 +20,7 @@ export class CalculatorComponent {//初期表示
   private reciprocalMode:boolean = false;//逆数モードのフラグ
   private equalpressed:boolean = false;//=を押した時のフラグ
   private mulconstant:number | null = null;//定数モード、乗数の時の定数
-  private readonly limtis ={//桁数の制限（整数部分10桁、小数部分8桁）
+  private readonly limits ={//桁数の制限（整数部分10桁、小数部分8桁）
     integer:10,
     decimal:8
   }
@@ -53,9 +53,9 @@ private appendDigit(digit:string):boolean{//桁数の制限ルール
   const decimal = this.display.split('.')[1];
   const integerlength = integer.replace('-','').length;
   if(decimal !== undefined){
-    return decimal.length < this.limtis.decimal;
+    return decimal.length < this.limits.decimal;
   }
-  return integerlength < this.limtis.integer;
+  return integerlength < this.limits.integer;
 }
 
   
@@ -162,7 +162,7 @@ percent(){//パーセントを計算する
     return;
   }
   const inputvalue = this.displayValue;
-  if(isNaN(inputvalue)){//error発生条件
+  if(Number.isNaN(inputvalue)){//error発生条件
     this.ErrorSet('Error');
     return;
   }
@@ -218,7 +218,7 @@ percent(){//パーセントを計算する
           this.ErrorSet('Error');
           return;
     }
-    if (!isNaN(result)){
+    if (!Number.isNaN(result)){
       this.display = this.formatnumber(result);
       this.waitingForSecondValue = true;
       this.firstvalue = result;
@@ -245,7 +245,7 @@ root(){//平方根を計算する
     return;
   }
   const inputvalue = this.displayValue;
-  if(isNaN(inputvalue)||inputvalue<0){//error発生条件
+  if(Number.isNaN(inputvalue)||inputvalue<0){//error発生条件
     this.ErrorSet('Error');
     return;
   }
@@ -318,7 +318,7 @@ calculateresult(){//＝を押した時の処理
   }
 
   if(this.operator && this.firstvalue!==null){//通常の計算＆定数モード
-    const newInputAfterEqual = this.constantMode&&this.equalpressed&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
+    const newInputAfterEqual = this.constantMode&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
     if(this.constantMode===false){//二つ目の数値を取得
       const secondvalue = inputvalue;
       this.lastvalue = secondvalue;
@@ -399,15 +399,15 @@ private calculate(operator:string,a:number,b:number){//四則演算をする
   }
 }
 private formatnumber(num:number):string{//結果のフォーマットを整える
-  if(isNaN(num) || !isFinite(num)){
+  if(Number.isNaN(num) || !Number.isFinite(num)){
     this.ErrorSet('Error');
     return 'Error';
   }
-  const strnum =num.toFixed(this.limtis.decimal);//小数を8桁にする
+  const strnum =num.toFixed(this.limits.decimal);//小数を8桁にする
   const integer = strnum.split('.')[0];//整数部分
   const decimal = strnum.split('.')[1];//小数部分
   const integerlength = integer.replace('-','').length;
-  if(integerlength > this.limtis.integer){//整数部分が10桁を超えていた時
+  if(integerlength > this.limits.integer){//整数部分が10桁を超えていた時
     this.ErrorSet('Error');
     return '桁数上限を超過';
   }
