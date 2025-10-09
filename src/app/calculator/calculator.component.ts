@@ -14,13 +14,13 @@ export class CalculatorComponent {//初期表示
   private lastvalue :number | null = null;//2つ目の数値
   private percentvalue :number | null = null;//パーセントの数値
   private operator :string | null = null;//演算子
-  private waitingForSecondValue :boolean = false;//2つ目の数値入力
+  private waitingForSecondValue :boolean = false;//2つ目の数値入力可能のフラグ
   private isError :boolean = false;//error状態のフラグ
   private constantMode:boolean = false;//定数モードのフラグ
   private reciprocalMode:boolean = false;//逆数モードのフラグ
-  private equalpressed:boolean = false;//=を押したフラグ
+  private equalpressed:boolean = false;//=を押した時のフラグ
   private mulconstant:number | null = null;//定数モード、乗数の時の定数
-  private readonly limtis ={//桁数の制限
+  private readonly limtis ={//桁数の制限（整数部分10桁、小数部分8桁）
     integer:10,
     decimal:8
   }
@@ -33,19 +33,10 @@ private ErrorSet(message:string):void{//error状態の設定
   this.display = message;
   this.isError = true;
 }
-private clearError():void{//error状態のクリア
+private clearError():void{//error状態をクリア
   if(this.isError === true){
   this.display = '0';
   this.isError = false;
-  this.firstvalue = null;
-  this.lastvalue = null;
-  this.percentvalue = null;
-  this.operator = null;
-  this.constantMode = false;
-  this.reciprocalMode = false;
-  this.waitingForSecondValue = false;
-  this.equalpressed = false;
-  this.mulconstant = null;
   this.firstvalue = null;
   this.lastvalue = null;
   this.percentvalue = null;
@@ -68,7 +59,7 @@ private appendDigit(digit:string):boolean{//桁数の制限ルール
 }
 
   
-inputdigit(digit:string) :void{//数値を入力する
+inputdigit(digit:string) :void{//数値が入力された時
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = digit;
@@ -117,13 +108,8 @@ handleoperator(nextOperator:string){//演算子を入力する
     this.display = '0';
     return;
   }
-  this.constantMode = false;//各状態のリセット
-  this.reciprocalMode = false;
-  this.equalpressed = false;
-  this.lastvalue = null;
-
   const inputvalue = this.displayValue;//数値として取得
-  if(this.equalpressed&&this.constantMode&&this.firstvalue!==null){//=数字、演算子の順番で押したら、新規計算
+  if(this.equalpressed===true&&this.constantMode===true&&this.firstvalue!==null&&this.waitingForSecondValue===false){//=を押した後に演算子を押したら、新規計算を始める
     this.firstvalue = inputvalue;
     this.lastvalue = null;
     this.operator = nextOperator;
@@ -138,23 +124,23 @@ handleoperator(nextOperator:string){//演算子を入力する
   this.equalpressed = false;
   this.lastvalue = null;
 
-  if(this.waitingForSecondValue===true){//次の数値入力待ち
-    this.operator = nextOperator;//演算子を入れ替え
+  if(this.waitingForSecondValue===true){//演算子連続押された時
+    this.operator = nextOperator;
     this.reciprocalMode = false;
     return;
   }
-if(this.firstvalue !== null&&this.operator){//数値あり、演算子あり
+if(this.firstvalue !== null&&this.operator){//通常時
   const result = this.calculate(this.operator,this.firstvalue,inputvalue);
   this.display = this.formatnumber(result);
   this.firstvalue = result;
   this.lastvalue = (nextOperator==='/')?null:inputvalue;
-}else{//演算子なし、数値あり
+}else{
   this.firstvalue = inputvalue;
   this.lastvalue = null;
 }
-this.operator = nextOperator; //演算子を入れ替え
+this.operator = nextOperator; 
 this.constantMode = false;
-this.waitingForSecondValue = true; //次の数値入力待ち
+this.waitingForSecondValue = true; 
 }
 togglenegative(){//±を切り替える
   if(this.isError === true){
@@ -181,7 +167,7 @@ percent(){//パーセントを計算する
     return;
   }
 
-  //特殊モード中に％を押した場合
+  //特殊モード中に％を押した場合は新規計算を始める
   if((this.constantMode===true&&this.equalpressed===true)||this.reciprocalMode===true){
     const result = inputvalue / 100;
     this.display = this.formatnumber(result);
@@ -190,14 +176,14 @@ percent(){//パーセントを計算する
     this.lastvalue = null;
     this.percentvalue = null;
     this.operator = null;
-    this.waitingForSecondValue = false;
+    this.waitingForSecondValue = true;
     this.constantMode = false;
     this.reciprocalMode = false;
     this.equalpressed = false;
     this.mulconstant = null;
     return;
   }
-    if(this.operator && this.firstvalue!==null){
+    if(this.operator && this.firstvalue!==null){//演算子押された後に％計算をする時
     if(this.percentvalue === null){
       this.percentvalue = inputvalue;
     }
@@ -242,13 +228,14 @@ percent(){//パーセントを計算する
     }
     return;
   }
-      const result = inputvalue / 100;
+      const result = inputvalue / 100;//数値だけ％計算をする時
       this.display = this.formatnumber(result);
       this.firstvalue = result;
       this.percentvalue = null;
       this.lastvalue = null;
       this.constantMode = false;
       }
+
 root(){//平方根を計算する
 
   if(this.isError === true){//errorの時
@@ -261,18 +248,18 @@ root(){//平方根を計算する
     this.ErrorSet('Error');
     return;
   }
-  const rootvalue = Math.sqrt(inputvalue);
-  if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時
+  const rootvalue = Math.sqrt(inputvalue);//平方根計算式
+  if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時(特殊モード用)、新規計算を始める
     this.display = this.formatnumber(rootvalue);
     this.firstvalue = rootvalue;
     this.lastvalue = null;
     this.operator = null;
-    this.waitingForSecondValue = false;
+    this.waitingForSecondValue = true;
     this.equalpressed = false;
     this.constantMode = false;
     return;
   }
-  if(this.operator!==null){//演算子がある時
+  if(this.operator!==null){//通常時
     if(this.waitingForSecondValue===true){
       this.display = this.formatnumber(rootvalue);
       this.lastvalue = rootvalue;
@@ -291,8 +278,8 @@ root(){//平方根を計算する
     this.waitingForSecondValue = true;
     this.equalpressed = false;
   }
-calculateresult(){//＝を押した時の処理
 
+calculateresult(){//＝を押した時の処理
 
   if(this.isError === true){//errorの時
     this.clearError();
@@ -329,12 +316,12 @@ calculateresult(){//＝を押した時の処理
     return;
   }
 
-  if(this.operator && this.firstvalue!==null){//通常の計算
+  if(this.operator && this.firstvalue!==null){//通常の計算＆定数モード
     const newInputAfterEqual = this.constantMode&&this.equalpressed&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
     if(this.constantMode===false){//二つ目の数値を取得
       const secondvalue = inputvalue;
       this.lastvalue = secondvalue;
-      if(this.operator==='*'){//乗数の時だけ行う処理
+      if(this.operator==='*'){//乗数の時だけ行う処理（乗数モードだけ左側の数値は定数）
         this.mulconstant = this.firstvalue;
       }else{
         this.mulconstant = null;
