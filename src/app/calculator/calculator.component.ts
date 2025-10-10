@@ -292,16 +292,13 @@ calculateresult(){//＝を押した時の処理
     this.reciprocalMode = true;
   }
   this.equalpressed = true;
+
   if(this.reciprocalMode===true){//逆数モード処理
     if(inputvalue===0){
       this.ErrorSet('Error');
       return;
     }
-    if (this.firstvalue!==null&&this.constantMode){//逆数計算を定数モードで計算
-    const result = this.firstvalue*inputvalue;
-    this.display = this.formatnumber(result);
-    this.firstvalue = result;
-    }else{//初回の逆数モード
+    //逆数モードは初回のみ以下で計算
       const result = 1/inputvalue;
       this.display = this.formatnumber(result);
       this.firstvalue = result;
@@ -312,11 +309,7 @@ calculateresult(){//＝を押した時の処理
       this.reciprocalMode = false;
       return;
     }
-    this.waitingForSecondValue = true;
-    this.constantMode = true;
-    return;
-  }
-
+  
   if(this.operator && this.firstvalue!==null){//通常の計算＆定数モード
     const newInputAfterEqual = this.constantMode&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
     if(this.constantMode===false){//二つ目の数値を取得
@@ -363,7 +356,7 @@ calculateresult(){//＝を押した時の処理
     this.equalpressed = true;
     return;
   }
-   this.constantMode = true;
+   this.constantMode = true ;
   }
  
 clear(){//クリアを押した時の処理
