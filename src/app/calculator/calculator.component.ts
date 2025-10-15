@@ -102,7 +102,6 @@ inputdecimal():void{//小数点を入力する
   if(this.waitingForSecondValue===true){//数値入力待ちの時
     this.display = '0.';
     this.waitingForSecondValue = false;
-    this.constantMode = false;
     this.equalpressed = false;
   }else if(this.display.includes('.')===false){//小数点がない時
   this.display = this.display + '.';
