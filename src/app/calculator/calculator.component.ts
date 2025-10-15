@@ -171,7 +171,7 @@ togglenegative(){//±を切り替える
   : '-' + this.display;
   this.display = newDisplay;
  
-    if (this.waitingForSecondValue&&this.firstvalue!==null&&this.lastvalue===null&&this.operator!==null){
+    if (this.waitingForSecondValue&&this.firstvalue!==null&&this.operator!==null){
       const n = parseFloat(newDisplay);
       if(!Number.isNaN(n)||Number.isFinite(n)){
         this.firstvalue = n;
