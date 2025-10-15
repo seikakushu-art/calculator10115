@@ -48,8 +48,15 @@
 }
 
 .left-ops .clear {
-  height: 110px; /* C は2マス分 */
-  background-color: #FF770F; /* クリアボタン色 */
+  height: 55px; 
+  background-color: #FF770F; 
+  color: white;
+  font-weight: bold;
+}
+
+.left-ops .clear-entry {
+  height: 55px; 
+  background-color: #FF770F; 
   color: white;
   font-weight: bold;
 }

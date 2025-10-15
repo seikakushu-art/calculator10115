@@ -54,11 +54,11 @@ private appendDigit(digit:string):boolean{//桁数の制限ルール
   const integerlength = integer.replace('-','').length;
   if(decimal !== undefined){
     return decimal.length < this.limits.decimal;
-  }
+    }
   return integerlength < this.limits.integer;
-}
+  }
 
-  
+
 inputdigit(digit:string) :void{//数値が入力された時
   if(this.isError === true){//errorの時
     this.clearError();
@@ -78,10 +78,15 @@ inputdigit(digit:string) :void{//数値が入力された時
     }
     this.display = digit;
     this.waitingForSecondValue = false;
+    this.equalpressed = false;
     return;
   }
   if(this.display === '0'&&digit!=='.'){//0の分岐
       this.display = digit;
+      return;
+    }
+    if((this.display==='0'||this.display==='-0')&&digit!=='.'){
+      this.display = (this.display.startsWith('-')?'-':'')+digit;
       return;
     }
   if (this.appendDigit(digit)===true){//桁数の制限ルールに従って数値を追加
@@ -98,9 +103,10 @@ inputdecimal():void{//小数点を入力する
     this.display = '0.';
     this.waitingForSecondValue = false;
     this.constantMode = false;
+    this.equalpressed = false;
   }else if(this.display.includes('.')===false){//小数点がない時
-    this.display = this.display + '.';
-  }
+  this.display = this.display + '.';
+}
 }
 handleoperator(nextOperator:string){//演算子を入力する
   if(this.isError === true){
@@ -109,7 +115,11 @@ handleoperator(nextOperator:string){//演算子を入力する
     return;
   }
   const inputvalue = this.displayValue;//数値として取得
-  if(this.equalpressed===true&&this.constantMode===true&&this.firstvalue!==null&&this.waitingForSecondValue===false){//=を押した後に演算子を押したら、新規計算を始める
+  if (this.firstvalue!==null&&this.waitingForSecondValue===false&&(
+    (this.equalpressed===true&&this.constantMode===true)//直後に演算子を入力
+    ||(this.constantMode===true&&this.lastvalue!==null)//数字と演算子
+  )
+  ){//=を押した後に演算子を押したら、新規計算を始める
     this.firstvalue = inputvalue;
     this.lastvalue = null;
     this.operator = nextOperator;
@@ -119,7 +129,7 @@ handleoperator(nextOperator:string){//演算子を入力する
     this.equalpressed = false;
     return;
   }
-  this.constantMode = false;//各状態のリセット
+  this.constantMode = false;//各状態のリセット(通常計算で特殊モードに入らないように)
   this.reciprocalMode = false;
   this.equalpressed = false;
   this.lastvalue = null;
@@ -131,7 +141,14 @@ handleoperator(nextOperator:string){//演算子を入力する
   }
 if(this.firstvalue !== null&&this.operator){//通常時
   const result = this.calculate(this.operator,this.firstvalue,inputvalue);
-  this.display = this.formatnumber(result);
+  if (this.isError || Number.isNaN(result)||!Number.isFinite(result)){
+    return;
+  }
+  const formatted = this.formatnumber(result);
+  if(this.isError){
+    return;
+  }
+  this.display = formatted;
   this.firstvalue = result;
   this.lastvalue = (nextOperator==='/')?null:inputvalue;
 }else{
@@ -148,11 +165,19 @@ togglenegative(){//±を切り替える
     this.display = '0';
     return;
   }
-  const changevalue = this.displayValue * -1;//±の切り替え
-    this.display = changevalue.toString();
+  const newDisplay = this.display.startsWith('-') 
+  ? this.display.slice(1)
+  : '-' + this.display;
+  this.display = newDisplay;
+ 
     if (this.waitingForSecondValue&&this.firstvalue!==null&&this.lastvalue===null&&this.operator!==null){
-      this.firstvalue = changevalue;
+      const n = parseFloat(newDisplay);
+      if(!Number.isNaN(n)||Number.isFinite(n)){
+        this.firstvalue = n;
+      }else{
+        this.ErrorSet('Error');
     }
+}
 }
 percent(){//パーセントを計算する
 
@@ -170,7 +195,15 @@ percent(){//パーセントを計算する
   //特殊モード中に％を押した場合は新規計算を始める
   if((this.constantMode===true&&this.equalpressed===true)||this.reciprocalMode===true){
     const result = inputvalue / 100;
-    this.display = this.formatnumber(result);
+    if(Number.isNaN(result)||!Number.isFinite(result)){
+      this.ErrorSet('Error');
+      return;
+    }
+    const formatted = this.formatnumber(result);
+    if(this.isError){
+      return;
+    }
+    this.display = formatted;
     //状態をクリア
     this.firstvalue = result;
     this.lastvalue = null;
@@ -183,9 +216,9 @@ percent(){//パーセントを計算する
     this.mulconstant = null;
     return;
   }
-    if(this.operator && this.firstvalue!==null){//演算子押された後に％計算をする時
-    if(this.percentvalue === null){
-      this.percentvalue = inputvalue;
+  if(this.operator && this.firstvalue!==null){//演算子押された後に％計算をする時
+      if(this.percentvalue === null){
+         this.percentvalue = inputvalue;
     }
     const percentinput = this.percentvalue;
     const basevalue = this.firstvalue;
@@ -219,7 +252,11 @@ percent(){//パーセントを計算する
           return;
     }
     if (!Number.isNaN(result)){
-      this.display = this.formatnumber(result);
+      const formatted = this.formatnumber(result);
+      if(this.isError){
+        return;
+      }
+      this.display = formatted;
       this.waitingForSecondValue = true;
       this.firstvalue = result;
       this.lastvalue = newLastvalue;
@@ -229,7 +266,15 @@ percent(){//パーセントを計算する
     return;
   }
       const result = inputvalue / 100;//数値だけ％計算をする時
-      this.display = this.formatnumber(result);
+      if(Number.isNaN(result)||!Number.isFinite(result)){
+        this.ErrorSet('Error');
+        return;
+      }
+      const formatted = this.formatnumber(result);
+      if(this.isError){
+        return;
+      }
+      this.display = formatted;
       this.firstvalue = result;
       this.waitingForSecondValue = true;
       this.percentvalue = null;
@@ -250,8 +295,12 @@ root(){//平方根を計算する
     return;
   }
   const rootvalue = Math.sqrt(inputvalue);//平方根計算式
+  const formatted = this.formatnumber(rootvalue);
+  if(this.isError){
+    return;
+  }
   if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時(特殊モード用)、新規計算を始める
-    this.display = this.formatnumber(rootvalue);
+    this.display = formatted;
     this.firstvalue = rootvalue;
     this.lastvalue = null;
     this.operator = null;
@@ -262,18 +311,18 @@ root(){//平方根を計算する
   }
   if(this.operator!==null){//通常時
     if(this.waitingForSecondValue===true){
-      this.display = this.formatnumber(rootvalue);
+      this.display = formatted;
       this.lastvalue = rootvalue;
       this.waitingForSecondValue = false;
     }else{
-      this.display = this.formatnumber(rootvalue);
+      this.display = formatted;
       this.lastvalue = rootvalue;
     }
     this.equalpressed = false;
     return;
     }
   //個別計算
-    this.display = this.formatnumber(rootvalue);
+    this.display = formatted;
     this.firstvalue = rootvalue;
     this.lastvalue = null;
     this.waitingForSecondValue = true;
@@ -300,7 +349,14 @@ calculateresult(){//＝を押した時の処理
     }
     //逆数モードは初回のみ以下で計算
       const result = 1/inputvalue;
-      this.display = this.formatnumber(result);
+      if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
+        return;
+      }
+      const formatted = this.formatnumber(result);
+      if(this.isError){
+        return;
+      }
+      this.display = formatted;
       this.firstvalue = result;
       this.operator = '/';
       this.lastvalue = inputvalue;
@@ -312,7 +368,7 @@ calculateresult(){//＝を押した時の処理
   
   if(this.operator && this.firstvalue!==null){//通常の計算＆定数モード
     const newInputAfterEqual = this.constantMode&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
-    if(this.constantMode===false){//二つ目の数値を取得
+    if(this.constantMode===false){//一回目の＝を押した時
       const secondvalue = inputvalue;
       this.lastvalue = secondvalue;
       if(this.operator==='*'){//乗数の時だけ行う処理（乗数モードだけ左側の数値は定数）
@@ -321,7 +377,14 @@ calculateresult(){//＝を押した時の処理
         this.mulconstant = null;
       }
       const result = this.calculate(this.operator,this.firstvalue,secondvalue);
-      this.display = this.formatnumber(result);
+      if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
+        return;
+      }
+      const formatted = this.formatnumber(result);
+      if(this.isError){
+        return;
+      }
+      this.display = formatted;
       this.firstvalue = result;
       this.waitingForSecondValue = true;
       this.constantMode = true;
@@ -350,7 +413,14 @@ calculateresult(){//＝を押した時の処理
       }
     }
     const result = this.calculate(this.operator,left,right);
-    this.display = this.formatnumber(result);
+    if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
+      return;
+    }
+    const formatted = this.formatnumber(result);
+    if(this.isError){
+      return;
+    }
+    this.display = formatted;
     this.firstvalue = result;
     this.waitingForSecondValue = true;
     this.equalpressed = true;
@@ -359,7 +429,7 @@ calculateresult(){//＝を押した時の処理
    this.constantMode = true ;
   }
  
-clear(){//クリアを押した時の処理
+clear():void{//クリアを押した時の処理
   this.display = '0';
   this.firstvalue = null;
   this.lastvalue = null;
@@ -372,11 +442,24 @@ clear(){//クリアを押した時の処理
   this.equalpressed = false;
   this.mulconstant = null;
 }
+clearEntry():void{//クリアエントリーキー
+  if(this.isError === true){
+    this.clearError();
+    this.display = '0';
+    return;
+  }
+  
+  if(!this.waitingForSecondValue){
+    this.display = '0';
+    this.percentvalue = null;
+  }
+  }
+
 private calculate(operator:string,a:number,b:number){//四則演算をする
   switch(operator){
-    case '+':
-      return a + b;
-    case '-':
+      case '+':
+        return a + b;
+      case '-':
       return a - b;
     case '*':
       return a * b;
@@ -399,10 +482,19 @@ private formatnumber(num:number):string{//結果のフォーマットを整え�
   const strnum =num.toFixed(this.limits.decimal);//小数を8桁にする
   const integer = strnum.split('.')[0];//整数部分
   const decimal = strnum.split('.')[1];//小数部分
-  const integerlength = integer.replace('-','').length;
+  const isNegative = integer.startsWith('-');
+  const integerDigits = integer.replace('-','');//-を削除
+  const integerlength = integerDigits.length;//整数部分の桁数
   if(integerlength > this.limits.integer){//整数部分が10桁を超えていた時
-    this.ErrorSet('Error');
-    return '桁数上限を超過';
+    const L = integerDigits.length;//整数部分の桁数
+    const left = integerDigits.slice(0,this.limits.integer);//左から10桁を取得
+    const boundary = L - 10;//10桁目の位置
+    const inserPos = Math.min(Math.max(boundary,1),left.length-1);//百億と十億の桁の間
+    const withDot = left.slice(0,inserPos)+'.'+left.slice(inserPos);//小数点を追加
+
+    const message = 'E'+(isNegative?'-':'')+withDot;
+    this.ErrorSet(message);
+    return message;
   }
   const  cleandecimal = decimal.replace(/\.?0+$/, '');//小数部分の余計な0を削除
   return cleandecimal ? `${integer}.${cleandecimal}` : integer;
