@@ -114,6 +114,7 @@ handleoperator(nextOperator:string){//演算子を入力する
     this.display = '0';
     return;
   }
+  this.percentvalue = null;
   const inputvalue = this.displayValue;//数値として取得
   if (this.firstvalue!==null&&this.waitingForSecondValue===false&&(
     (this.equalpressed===true&&this.constantMode===true)//直後に演算子を入力
