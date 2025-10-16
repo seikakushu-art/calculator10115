@@ -1,6 +1,26 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import Decimal from 'decimal.js';
 
+Decimal.set({
+  precision: 40,
+  rounding: Decimal.ROUND_HALF_UP,
+  toExpNeg: -1000,
+  toExpPos: 1000,
+})
+
+class Calculator extends Error{
+  constructor(msg = 'Error'){super(msg);this.name = 'calcError';}
+}
+class DivideByZeroError extends Calculator{//0で割った時のエラー
+  constructor(){super("Error");this.name = 'DivideByZeroError';}
+}
+class  LimitExceededError extends Calculator{//桁数の制限を超えた時のエラー
+  constructor(msg:string){super(msg);this.name = 'LimitExceededError';}
+}
+class DomainError extends Calculator{//定義域のエラー
+  constructor(msg = "Error"){super(msg);this.name = 'DomainError';}
+}
 @Component({
   selector: 'app-calculator',
   standalone: true,
@@ -8,25 +28,36 @@ import { CommonModule } from '@angular/common';
   templateUrl: './calculator.component.html',
   styleUrl: './calculator.component.css'
 })
+
 export class CalculatorComponent {//初期表示
   display :string = '0';
-  private firstvalue :number | null = null;//1つ目の数値
-  private lastvalue :number | null = null;//2つ目の数値
-  private percentvalue :number | null = null;//パーセントの数値
+  private firstvalue :Decimal | null = null;//1つ目の数値
+  private lastvalue :Decimal | null = null;//2つ目の数値
+  private percentvalue :Decimal | null = null;//パーセントの数値
   private operator :string | null = null;//演算子
   private waitingForSecondValue :boolean = false;//2つ目の数値入力可能のフラグ
   private isError :boolean = false;//error状態のフラグ
   private constantMode:boolean = false;//定数モードのフラグ
   private reciprocalMode:boolean = false;//逆数モードのフラグ
   private equalpressed:boolean = false;//=を押した時のフラグ
-  private mulconstant:number | null = null;//定数モード、乗数の時の定数
+  private mulconstant:Decimal | null = null;//定数モード、乗数の時の定数
   private readonly limits ={//桁数の制限（整数部分10桁、小数部分8桁）
     integer:10,
     decimal:8
   }
 
-  get displayValue():number{//数値として取得
-    return parseFloat(this.display);
+  private safely<T>(fn:()=>T):T|undefined{
+    try{
+      return fn();
+    }catch(e:unknown){
+      const msg = e instanceof Calculator ? e.message : 'Error';
+      this.ErrorSet(msg);
+      return undefined;
+    }
+  }
+
+  get displayValue():Decimal{//数値として取得
+    return new Decimal(this.display);
   }
 
 private ErrorSet(message:string):void{//error状態の設定
@@ -60,6 +91,7 @@ private appendDigit(digit:string):boolean{//桁数の制限ルール
 
 
 inputdigit(digit:string) :void{//数値が入力された時
+  this.safely(()=>{
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = digit;
@@ -92,8 +124,11 @@ inputdigit(digit:string) :void{//数値が入力された時
   if (this.appendDigit(digit)===true){//桁数の制限ルールに従って数値を追加
     this.display = this.display + digit;
   }
+});
 }
+
 inputdecimal():void{//小数点を入力する
+  this.safely(()=>{
   if(this.isError === true){
     this.clearError();
     this.display = '0.';
@@ -106,8 +141,10 @@ inputdecimal():void{//小数点を入力する
   }else if(this.display.includes('.')===false){//小数点がない時
   this.display = this.display + '.';
 }
+});
 }
 handleoperator(nextOperator:string){//演算子を入力する
+  this.safely(()=>{
   if(this.isError === true){
     this.clearError();
     this.display = '0';
@@ -141,13 +178,7 @@ handleoperator(nextOperator:string){//演算子を入力する
   }
 if(this.firstvalue !== null&&this.operator){//通常時
   const result = this.calculate(this.operator,this.firstvalue,inputvalue);
-  if (this.isError || Number.isNaN(result)||!Number.isFinite(result)){
-    return;
-  }
   const formatted = this.formatnumber(result);
-  if(this.isError){
-    return;
-  }
   this.display = formatted;
   this.firstvalue = result;
   this.lastvalue = (nextOperator==='/')?null:inputvalue;
@@ -158,8 +189,11 @@ if(this.firstvalue !== null&&this.operator){//通常時
 this.operator = nextOperator; 
 this.constantMode = false;
 this.waitingForSecondValue = true; 
+});
 }
-togglenegative(){//±を切り替える
+
+togglenegative():void{//±を切り替える
+  this.safely(()=>{
   if(this.isError === true){
     this.clearError();
     this.display = '0';
@@ -168,43 +202,31 @@ togglenegative(){//±を切り替える
   const newDisplay = this.display.startsWith('-') 
   ? this.display.slice(1)
   : '-' + this.display;
-  this.display = newDisplay;
- 
+  const dec = new Decimal(newDisplay);
+  if(!dec.isFinite()) {
+    throw new DomainError();}
+    this.display = newDisplay;
     if (this.waitingForSecondValue&&this.firstvalue!==null){
-      const n = parseFloat(newDisplay);
-      if(!Number.isNaN(n)||Number.isFinite(n)){
-        this.firstvalue = n;
-      }else{
-        this.ErrorSet('Error');
+      this.firstvalue = dec;
     }
+  });
 }
-}
-percent(){//パーセントを計算する
 
+percent(){//パーセントを計算する
+  this.safely(()=>{
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = '0';
     return;
   }
   const inputvalue = this.displayValue;
-  if(Number.isNaN(inputvalue)){//error発生条件
-    this.ErrorSet('Error');
-    return;
-  }
-
+  if(!inputvalue.isFinite()) throw new DomainError();
   //特殊モード中に％を押した場合は新規計算を始める
   if((this.constantMode===true&&this.equalpressed===true)||this.reciprocalMode===true){
-    const result = inputvalue / 100;
-    if(Number.isNaN(result)||!Number.isFinite(result)){
-      this.ErrorSet('Error');
-      return;
-    }
+    const result = inputvalue.div(100);
     const formatted = this.formatnumber(result);
-    if(this.isError){
-      return;
-    }
-    this.display = formatted;
     //状態をクリア
+    this.display = formatted;
     this.firstvalue = result;
     this.lastvalue = null;
     this.percentvalue = null;
@@ -222,83 +244,66 @@ percent(){//パーセントを計算する
     }
     const percentinput = this.percentvalue;
     const basevalue = this.firstvalue;
-    let result:number;
-    let newLastvalue:number|null=null;
+    let result:Decimal;
+    let newLastvalue:Decimal|null=null;
 
     switch(this.operator){
       case '+':
-        newLastvalue = basevalue * (percentinput / 100);
-        result = basevalue + newLastvalue;
+        newLastvalue = basevalue.times(percentinput).div(100);
+        result = basevalue.plus(newLastvalue);
         break;
       case '-':
-        newLastvalue = basevalue * (percentinput / 100);
-        result = basevalue - newLastvalue;
+        newLastvalue = basevalue.times(percentinput).div(100);
+        result = basevalue.minus(newLastvalue);
         break;
       case '*':
-        result = basevalue * (percentinput / 100);
+        result = basevalue.times(percentinput).div(100);
         newLastvalue = basevalue;
         this.mulconstant = basevalue;
         break;
       case '/':
-        if(percentinput === 0){
-          this.ErrorSet('Error');
-          return;
+        if(percentinput.isZero()){
+          throw new DivideByZeroError();
         }
-        result = basevalue / (percentinput / 100);
-        newLastvalue = basevalue*(percentinput / 100);
+        result = basevalue.div(percentinput.div(100));
+        newLastvalue = basevalue.times(percentinput).div(100);
         break;
         default:
-          this.ErrorSet('Error');
-          return;
+          throw new Calculator('Error');
     }
-    if (!Number.isNaN(result)){
-      const formatted = this.formatnumber(result);
-      if(this.isError){
-        return;
-      }
+    const formatted = this.formatnumber(result);
       this.display = formatted;
       this.waitingForSecondValue = true;
       this.firstvalue = result;
       this.lastvalue = newLastvalue;
       this.constantMode = true;
       this.equalpressed = false;
-    }
     return;
   }
-      const result = inputvalue / 100;//数値だけ％計算をする時
-      if(Number.isNaN(result)||!Number.isFinite(result)){
-        this.ErrorSet('Error');
-        return;
-      }
+      const result = inputvalue.div(100);//数値だけ％計算をする時
       const formatted = this.formatnumber(result);
-      if(this.isError){
-        return;
-      }
       this.display = formatted;
       this.firstvalue = result;
       this.waitingForSecondValue = true;
       this.percentvalue = null;
       this.lastvalue = null;
       this.constantMode = false;
-      }
+      });
+    }
 
 root(){//平方根を計算する
-
+  this.safely(()=>{
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = '0';
     return;
   }
   const inputvalue = this.displayValue;
-  if(Number.isNaN(inputvalue)||inputvalue<0){//error発生条件
-    this.ErrorSet('Error');
-    return;
+  if(inputvalue.isNegative()){//error発生条件
+    throw new DomainError();
   }
-  const rootvalue = Math.sqrt(inputvalue);//平方根計算式
+  const rootvalue = inputvalue.sqrt();//平方根計算式
   const formatted = this.formatnumber(rootvalue);
-  if(this.isError){
-    return;
-  }
   if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時(特殊モード用)、新規計算を始める
     this.display = formatted;
     this.firstvalue = rootvalue;
@@ -327,10 +332,10 @@ root(){//平方根を計算する
     this.lastvalue = null;
     this.waitingForSecondValue = true;
     this.equalpressed = false;
-  }
-
+});
+}
 calculateresult(){//＝を押した時の処理
-
+  this.safely(()=>{
   if(this.isError === true){//errorの時
     this.clearError();
     this.display = '0';
@@ -343,19 +348,12 @@ calculateresult(){//＝を押した時の処理
   this.equalpressed = true;
 
   if(this.reciprocalMode===true){//逆数モード処理
-    if(inputvalue===0){
-      this.ErrorSet('Error');
-      return;
+    if(inputvalue.isZero()){
+      throw new DivideByZeroError();
     }
     //逆数モードは初回のみ以下で計算
-      const result = 1/inputvalue;
-      if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
-        return;
-      }
+      const result = new Decimal(1).div(inputvalue);
       const formatted = this.formatnumber(result);
-      if(this.isError){
-        return;
-      }
       this.display = formatted;
       this.firstvalue = result;
       this.operator = '/';
@@ -367,7 +365,7 @@ calculateresult(){//＝を押した時の処理
     }
   
   if(this.operator && this.firstvalue!==null){//通常の計算＆定数モード
-    const newInputAfterEqual = this.constantMode&&(inputvalue!==this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
+    const newInputAfterEqual = this.constantMode&&!inputvalue.eq(this.firstvalue);//「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
     if(this.constantMode===false){//一回目の＝を押した時
       const secondvalue = inputvalue;
       this.lastvalue = secondvalue;
@@ -377,13 +375,7 @@ calculateresult(){//＝を押した時の処理
         this.mulconstant = null;
       }
       const result = this.calculate(this.operator,this.firstvalue,secondvalue);
-      if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
-        return;
-      }
       const formatted = this.formatnumber(result);
-      if(this.isError){
-        return;
-      }
       this.display = formatted;
       this.firstvalue = result;
       this.waitingForSecondValue = true;
@@ -392,8 +384,8 @@ calculateresult(){//＝を押した時の処理
       return;
     }
 
-    let left:number;//定数モード
-    let right:number;
+    let left:Decimal;//定数モード
+    let right:Decimal;
     if(this.operator==='*'){
       if(newInputAfterEqual===true){
         left = (this.mulconstant??this.firstvalue);
@@ -413,13 +405,7 @@ calculateresult(){//＝を押した時の処理
       }
     }
     const result = this.calculate(this.operator,left,right);
-    if(this.isError||Number.isNaN(result)||!Number.isFinite(result)){
-      return;
-    }
     const formatted = this.formatnumber(result);
-    if(this.isError){
-      return;
-    }
     this.display = formatted;
     this.firstvalue = result;
     this.waitingForSecondValue = true;
@@ -427,6 +413,7 @@ calculateresult(){//＝を押した時の処理
     return;
   }
    this.constantMode = true ;
+   });
   }
  
 clear():void{//クリアを押した時の処理
@@ -455,30 +442,25 @@ clearEntry():void{//クリアエントリーキー
   }
   }
 
-private calculate(operator:string,a:number,b:number){//四則演算をする
+private calculate(operator:string,a:Decimal,b:Decimal):Decimal{//四則演算をする
   switch(operator){
       case '+':
-        return a + b;
+        return a.plus(b);
       case '-':
-      return a - b;
+      return a.minus(b);
     case '*':
-      return a * b;
+      return a.times(b);
     case '/':
-      if(b===0){
-        this.ErrorSet('Error');
-        return NaN;
+      if(b.isZero()){
+        throw new DivideByZeroError();
       }
-      return a / b;
+      return a.div(b);
     default:
-      this.ErrorSet('Error');
-      return NaN;
+      throw new Calculator('Error');
   }
 }
-private formatnumber(num:number):string{//結果のフォーマットを整える
-  if(Number.isNaN(num) || !Number.isFinite(num)){
-    this.ErrorSet('Error');
-    return 'Error';
-  }
+private formatnumber(num:Decimal):string{//結果のフォーマットを整える
+  if(!num.isFinite()) throw new DomainError();
   const strnum =num.toFixed(this.limits.decimal);//小数を8桁にする
   const integer = strnum.split('.')[0];//整数部分
   const decimal = strnum.split('.')[1];//小数部分
@@ -493,8 +475,7 @@ private formatnumber(num:number):string{//結果のフォーマットを整え�
     const withDot = left.slice(0,inserPos)+'.'+left.slice(inserPos);//小数点を追加
 
     const message = 'E'+(isNegative?'-':'')+withDot;
-    this.ErrorSet(message);
-    return message;
+    throw new LimitExceededError(message);
   }
   const  cleandecimal = decimal.replace(/\.?0+$/, '');//小数部分の余計な0を削除
   return cleandecimal ? `${integer}.${cleandecimal}` : integer;
