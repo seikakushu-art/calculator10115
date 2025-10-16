@@ -221,6 +221,21 @@ percent(){//パーセントを計算する
   }
   const inputvalue = this.displayValue;
   if(!inputvalue.isFinite()) throw new DomainError();
+  //計算結果後に新規計算を始める
+  if (this.constantMode===true&&this.equalpressed===false&&this.waitingForSecondValue===false){
+    const result = inputvalue.div(100);
+    const formatted = this.formatnumber(result);
+    this.display = formatted;
+    this.firstvalue = result;
+    this.waitingForSecondValue = true;
+    this.percentvalue = null;
+    this.lastvalue = null;
+    this.operator = null;
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.mulconstant = null;
+    return;
+  }
   //特殊モード中に％を押した場合は新規計算を始める
   if((this.constantMode===true&&this.equalpressed===true)||this.reciprocalMode===true){
     const result = inputvalue.div(100);
