@@ -314,7 +314,7 @@ root(){//平方根を計算する
     return;
   }
   const inputvalue = this.displayValue;
-  if(inputvalue.isNegative()){//error発生条件
+  if(inputvalue.lt(0)){//error発生条件
     throw new DomainError();
   }
   const rootvalue = inputvalue.sqrt();//平方根計算式
