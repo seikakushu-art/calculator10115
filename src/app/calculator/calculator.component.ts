@@ -229,11 +229,7 @@ percent(){//パーセントを計算する
     this.firstvalue = result;
     this.waitingForSecondValue = true;
     this.percentvalue = null;
-    this.lastvalue = null;
-    this.operator = null;
-    this.constantMode = false;
     this.reciprocalMode = false;
-    this.mulconstant = null;
     return;
   }
   //特殊モード中に％を押した場合は新規計算を始める
@@ -322,11 +318,8 @@ root(){//平方根を計算する
   if(this.equalpressed===true||this.constantMode===true){//直前＝を押した時(特殊モード用)、新規計算を始める
     this.display = formatted;
     this.firstvalue = rootvalue;
-    this.lastvalue = null;
-    this.operator = null;
     this.waitingForSecondValue = true;
     this.equalpressed = false;
-    this.constantMode = false;
     return;
   }
   if(this.operator!==null){//通常時
