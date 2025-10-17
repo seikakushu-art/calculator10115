@@ -476,7 +476,12 @@ private calculate(operator:string,a:Decimal,b:Decimal):Decimal{//四則演算を
 }
 private formatnumber(num:Decimal):string{//結果のフォーマットを整える
   if(!num.isFinite()) throw new DomainError();
-  const strnum =num.toFixed(this.limits.decimal);//小数を8桁にする
+  const dp = this.limits.decimal;
+  const truncated = num.toDecimalPlaces(dp,Decimal.ROUND_DOWN);//-0を排除
+  if(truncated.isZero()){
+    return '0';
+  }
+  const strnum = truncated.toFixed(dp,Decimal.ROUND_DOWN);
   const integer = strnum.split('.')[0];//整数部分
   const decimal = strnum.split('.')[1];//小数部分
   const isNegative = integer.startsWith('-');
