@@ -7,8 +7,8 @@
     <div class="left-ops">
       <button (click)="percent()">%</button>
       <button (click)="root()">√</button>
-      <button class="clear" (click)="clear()">C</button>
       <button class="clear-entry" (click)="clearEntry()">CE</button>
+      <button class="clear" (click)="clear()">C</button>
     </div>
 
     <!-- 中央（数字系） -->
@@ -34,13 +34,13 @@
     <div class="right-ops">
       <button (click)="handleoperator('/')">÷</button>
       <button (click)="handleoperator('*')">×</button>
-      <button (click)="handleoperator('-')">−</button>
-      <button (click)="handleoperator('+')">＋</button>
+      <button (click)="handleoperator('-')">-</button>
+      <button (click)="handleoperator('+')">+</button>
     </div>
   </div>
   <!-- ＝ボタン -->
   <div class="equal-row">
-    <button class="equal" (click)="calculateresult()">＝</button>
+    <button class="equal" (click)="calculateresult()">=</button>
   </div>
   </div>
   

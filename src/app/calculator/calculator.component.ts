@@ -99,13 +99,7 @@ inputdigit(digit:string) :void{//数値が入力された時
   }
   if(this.waitingForSecondValue===true){//2つ目の数値入力の分岐
     if(this.percentvalue!==null){
-      this.firstvalue = null;
-      this.lastvalue = null;
-      this.operator = null;
       this.equalpressed = false;
-      this.constantMode = false;
-      this.reciprocalMode = false;
-      this.mulconstant = null;
       this.percentvalue = null;
     }
     this.display = digit;
@@ -135,6 +129,10 @@ inputdecimal():void{//小数点を入力する
     return;
   }
   if(this.waitingForSecondValue===true){//数値入力待ちの時
+    if (this.percentvalue!==null){
+      this.percentvalue = null;
+      this.equalpressed = false;
+    }
     this.display = '0.';
     this.waitingForSecondValue = false;
     this.equalpressed = false;
@@ -164,12 +162,14 @@ handleoperator(nextOperator:string){//演算子を入力する
     this.constantMode = false;
     this.reciprocalMode = false;
     this.equalpressed = false;
+    this.mulconstant = null;
     return;
   }
   this.constantMode = false;//各状態のリセット(通常計算で特殊モードに入らないように)
   this.reciprocalMode = false;
   this.equalpressed = false;
   this.lastvalue = null;
+  this.mulconstant = null;
 
   if(this.waitingForSecondValue===true){//演算子連続押された時
     this.operator = nextOperator;
@@ -269,8 +269,8 @@ percent(){//パーセントを計算する
         break;
       case '*':
         result = basevalue.times(percentinput).div(100);
-        newLastvalue = basevalue;
-        this.mulconstant = basevalue;
+        newLastvalue = this.mulconstant??basevalue;
+        this.mulconstant = this.mulconstant??basevalue;
         break;
       case '/':
         if(percentinput.isZero()){
@@ -286,7 +286,7 @@ percent(){//パーセントを計算する
       this.display = formatted;
       this.waitingForSecondValue = true;
       this.firstvalue = result;
-      this.lastvalue = newLastvalue;
+      this.lastvalue = (this.operator==='*')?newLastvalue:(this.lastvalue??newLastvalue);
       this.constantMode = true;
       this.equalpressed = false;
     return;
