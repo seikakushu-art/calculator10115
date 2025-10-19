@@ -1,14 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Decimal from 'decimal.js';
-
-Decimal.set({
-  precision: 40,
-  rounding: Decimal.ROUND_HALF_UP,
-  toExpNeg: -1000,
-  toExpPos: 1000,
-});
-
+import  Decimal from '../lib/decimal-lite'
 class Calculator extends Error {
   constructor(msg = 'Error') {
     super(msg);
