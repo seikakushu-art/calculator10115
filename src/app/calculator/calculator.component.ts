@@ -69,6 +69,36 @@ export class CalculatorComponent {
     return new Decimal(this.display);
   }
 
+  private resetAllState(): void {//全ての状態をリセット
+    this.isError = false;
+    this.firstvalue = null;
+    this.lastvalue = null;
+    this.percentvalue = null;
+    this.operator = null;
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.waitingForSecondValue = false;
+    this.equalpressed = false;
+    this.mulconstant = null;
+  }
+
+  private resetModes(): void {//特殊モードの状態をリセット
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.equalpressed = false;
+    this.mulconstant = null;
+  }
+
+  private startNewCalculation(): void {//新規計算を始める
+    this.lastvalue = null;
+    this.operator = null;
+    this.waitingForSecondValue = true;
+    this.constantMode = false;
+    this.reciprocalMode = false;
+    this.equalpressed = false;
+    this.mulconstant = null;
+  }
+
   private ErrorSet(message: string): void {
     //error状態の設定
     this.display = message;
@@ -78,16 +108,7 @@ export class CalculatorComponent {
     //error状態をクリア
     if (this.isError === true) {
       this.display = '0';
-      this.isError = false;
-      this.firstvalue = null;
-      this.lastvalue = null;
-      this.percentvalue = null;
-      this.operator = null;
-      this.constantMode = false;
-      this.reciprocalMode = false;
-      this.waitingForSecondValue = false;
-      this.equalpressed = false;
-      this.mulconstant = null;
+      this.resetAllState();
     }
   }
   private appendDigit(digit: string): boolean {
@@ -181,18 +202,13 @@ export class CalculatorComponent {
         this.lastvalue = null;
         this.operator = nextOperator;
         this.waitingForSecondValue = true;
-        this.constantMode = false;
-        this.reciprocalMode = false;
-        this.equalpressed = false;
-        this.mulconstant = null;
+        this.resetModes();
         return;
       }
-      this.constantMode = false; //各状態のリセット(通常計算で特殊モードに入らないように)
-      this.reciprocalMode = false;
-      this.equalpressed = false;
+      //各状態のリセット(通常計算で特殊モードに入らないように)
+      this.resetModes();
       this.lastvalue = null;
-      this.mulconstant = null;
-
+    
       if (this.waitingForSecondValue === true) {
         //演算子連続押された時
         this.operator = nextOperator;
@@ -278,14 +294,8 @@ export class CalculatorComponent {
         //状態をクリア
         this.display = formatted;
         this.firstvalue = result;
-        this.lastvalue = null;
         this.percentvalue = null;
-        this.operator = null;
-        this.waitingForSecondValue = true;
-        this.constantMode = false;
-        this.reciprocalMode = false;
-        this.equalpressed = false;
-        this.mulconstant = null;
+        this.startNewCalculation();
         return;
       }
       if (this.operator && this.firstvalue !== null) {
@@ -502,16 +512,7 @@ export class CalculatorComponent {
   clear(): void {
     //クリアを押した時の処理
     this.display = '0';
-    this.firstvalue = null;
-    this.lastvalue = null;
-    this.operator = null;
-    this.waitingForSecondValue = false;
-    this.percentvalue = null;
-    this.isError = false;
-    this.constantMode = false;
-    this.reciprocalMode = false;
-    this.equalpressed = false;
-    this.mulconstant = null;
+    this.resetAllState();
   }
   clearEntry(): void {
     //クリアエントリーキー
