@@ -506,6 +506,8 @@ export class CalculatorComponent {
         return;
       }
       this.constantMode = true;
+      this.waitingForSecondValue = true;
+      this.firstvalue = inputvalue;
     });
   }
 
