@@ -443,7 +443,7 @@ export class CalculatorComponent {
           this.constantMode && !inputvalue.eq(this.firstvalue); //「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
         if (this.constantMode === false) {
           let secondvalue: Decimal;
-          if (this.waitingForSecondValue === true&&this.lastvalue === null) {//+-の時だけ第二の数値は0
+          if (this.waitingForSecondValue === true) {//+-の時だけ第二の数値は0
             if(this.operator === '+'||this.operator === '-'){
               secondvalue = new Decimal(0);
             }else{
