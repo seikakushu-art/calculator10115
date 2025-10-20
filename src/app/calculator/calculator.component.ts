@@ -440,8 +440,17 @@ export class CalculatorComponent {
         const newInputAfterEqual =
           this.constantMode && !inputvalue.eq(this.firstvalue); //「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
         if (this.constantMode === false) {
+          let secondvalue: Decimal;
+          if (this.waitingForSecondValue === true&&this.lastvalue === null) {//+-の時だけ第二の数値は0
+            if(this.operator === '+'||this.operator === '-'){
+              secondvalue = new Decimal(0);
+            }else{
+              secondvalue = inputvalue;
+            }
+          }else{
+            secondvalue = inputvalue;
+          }
           //一回目の＝を押した時
-          const secondvalue = inputvalue;
           this.lastvalue = secondvalue;
           if (this.operator === '*') {
             //乗数の時だけ行う処理（乗数モードだけ左側の数値は定数）
