@@ -117,10 +117,12 @@ export class CalculatorComponent {
   private clearError(): void {
     //error状態をクリア
     if (this.isError === true) {
-      this.display = '0';
       this.resetAllState();
+      this.display = '0';
+      this.exactValue = new Decimal(0);
     }
   }
+
   private appendDigit(digit: string): boolean {
     //桁数の制限ルール
     const integer = this.display.split('.')[0];
@@ -135,13 +137,7 @@ export class CalculatorComponent {
   inputdigit(digit: string): void {
     //数値が入力された時
     this.safely(() => {
-      if (this.isError === true) {
-        //errorの時
-        this.clearError();
-        this.display = digit;
-        this.syncDisplay();
-        return;
-      }
+      if (this.isError === true) return;
       if (this.waitingForSecondValue === true) {
         //2つ目の数値入力の分岐
         if (this.percentvalue !== null) {
@@ -176,12 +172,7 @@ export class CalculatorComponent {
   inputdecimal(): void {
     //小数点を入力する
     this.safely(() => {
-      if (this.isError === true) {
-        this.clearError();
-        this.display = '0.';
-        this.syncDisplay();
-        return;
-      }
+      if (this.isError === true) return;
       if (this.waitingForSecondValue === true) {
         //数値入力待ちの時
         if (this.percentvalue !== null) {
@@ -201,11 +192,7 @@ export class CalculatorComponent {
   handleoperator(nextOperator: string) {
     //演算子を入力する
     this.safely(() => {
-      if (this.isError === true) {
-        this.clearError();
-        this.display = '0';
-        return;
-      }
+      if (this.isError === true) return;
       this.percentvalue = null;
       const inputvalue = this.displayValue; //数値として取得
       if (
@@ -255,12 +242,7 @@ export class CalculatorComponent {
   togglenegative(): void {
     //±を切り替える
     this.safely(() => {
-      if (this.isError === true) {
-        this.clearError();
-        this.display = '0';
-        this.syncDisplay();
-        return;
-      }
+      if (this.isError === true) return;
       const newDisplay = this.display.startsWith('-')
         ? this.display.slice(1)
         : '-' + this.display;
@@ -278,12 +260,7 @@ export class CalculatorComponent {
   percent() {
     //パーセントを計算する
     this.safely(() => {
-      if (this.isError === true) {
-        //errorの時
-        this.clearError();
-        this.display = '0';
-        return;
-      }
+      if (this.isError === true) return;
       const inputvalue = this.displayValue;
       if (!inputvalue.isFinite()) throw new DomainError();
       //計算結果後に新規計算を始める
@@ -369,12 +346,7 @@ export class CalculatorComponent {
   root() {
     //平方根を計算する
     this.safely(() => {
-      if (this.isError === true) {
-        //errorの時
-        this.clearError();
-        this.display = '0';
-        return;
-      }
+      if (this.isError === true) return;
       const inputvalue = this.displayValue;
       if (inputvalue.lt(0)) {
         //error発生条件
@@ -414,12 +386,7 @@ export class CalculatorComponent {
   calculateresult() {
     //＝を押した時の処理
     this.safely(() => {
-      if (this.isError === true) {
-        //errorの時
-        this.clearError();
-        this.display = '0';
-        return;
-      }
+      if (this.isError === true) return;
       const inputvalue = this.displayValue; //数値として取得
       if (
         this.operator === '/' &&
@@ -528,13 +495,11 @@ export class CalculatorComponent {
     this.resetAllState();
   }
   clearEntry(): void {
-    //クリアエントリーキー
+    //クリアエントリー
     if (this.isError === true) {
       this.clearError();
-      this.display = '0';
       return;
     }
-
     if (!this.waitingForSecondValue) {
       this.display = '0';
       this.exactValue = new Decimal(0);
