@@ -429,7 +429,7 @@ export class CalculatorComponent {
       if (this.operator && this.firstvalue !== null) {
         //通常の計算＆定数モード
         const newInputAfterEqual =
-          this.constantMode && !inputvalue.eq(this.firstvalue); //「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
+          this.constantMode && this.waitingForSecondValue === false; //「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
         if (this.constantMode === false) {
           let secondvalue: Decimal;
           if (this.waitingForSecondValue === true) {//+-の時だけ第二の数値は0
