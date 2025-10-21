@@ -300,6 +300,21 @@ export class CalculatorComponent {
         this.startNewCalculation();
         return;
       }
+      if(//数値、演算子、％入力で、+-の時だけ行う処理
+        (this.operator === '+'||this.operator === '-')&&
+        this.firstvalue !== null&&
+        this.waitingForSecondValue === true &&
+        this.lastvalue === null
+      ){
+        const result = inputvalue.div(100);
+        this.showDisplay(result);
+        this.firstvalue = result;
+        this.waitingForSecondValue = true;
+        this.percentvalue = null;
+        this.constantMode = false;
+        this.equalpressed = false;
+        return;
+      }
       if (this.operator && this.firstvalue !== null) {
         //演算子押された後に％計算をする時
         if (this.percentvalue === null) {
