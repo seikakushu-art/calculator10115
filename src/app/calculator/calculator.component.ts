@@ -243,13 +243,9 @@ export class CalculatorComponent {
     //±を切り替える
     this.safely(() => {
       if (this.isError === true) return;
-      if(this.display === '0'||this.display === '-0'){
-        this.display = this.display.startsWith('-')?'0':'-0';
-        this.syncDisplay();
-        return;
-      }
-      if(this.display === '0.'||this.display === '-0.'){
-        this.display = this.display.startsWith('-')?'0.':'-0.';
+      const v = new Decimal(this.display||'0');//表示値が数値的に0なら、文字列だけ符号を反転して同期して終わり
+      if(v.isZero()){
+        this.display = this.display.startsWith('-')?this.display.slice(1):'-'+this.display;
         this.syncDisplay();
         return;
       }
