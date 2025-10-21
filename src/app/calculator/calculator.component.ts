@@ -48,6 +48,7 @@ export class CalculatorComponent {
   private reciprocalMode: boolean = false; //逆数モードのフラグ
   private equalpressed: boolean = false; //=を押した時のフラグ
   private mulconstant: Decimal | null = null; //定数モード、乗数の時の定数
+  private exactValue: Decimal = new Decimal(0); //丸め処理されていない数値
   private readonly limits = {
     //桁数の制限（整数部分10桁、小数部分8桁）
     integer: 10,
@@ -66,7 +67,16 @@ export class CalculatorComponent {
 
   get displayValue(): Decimal {
     //数値として取得
-    return new Decimal(this.display);
+    return this.exactValue;
+  }
+
+  private showDisplay(s: Decimal): void {//表示する数値だけフォーマット処理
+    this.exactValue = s;
+    this.display = this.formatnumber(s);
+  }
+
+  private syncDisplay(): void {//入力したdisplayの数値と内部の数値を同期
+    this.exactValue = new Decimal(this.display||'0');
   }
 
   private resetAllState(): void {//全ての状態をリセット
@@ -129,6 +139,7 @@ export class CalculatorComponent {
         //errorの時
         this.clearError();
         this.display = digit;
+        this.syncDisplay();
         return;
       }
       if (this.waitingForSecondValue === true) {
@@ -140,21 +151,25 @@ export class CalculatorComponent {
         this.display = digit;
         this.waitingForSecondValue = false;
         this.equalpressed = false;
+        this.syncDisplay();
         return;
       }
       if (this.display === '0' && digit !== '.') {
         //0の分岐
         this.display = digit;
+        this.syncDisplay();
         return;
       }
       if ((this.display === '0' || this.display === '-0') && digit !== '.') {
         this.display = (this.display.startsWith('-') ? '-' : '') + digit;
+        this.syncDisplay();
         return;
       }
       if (this.appendDigit(digit) === true) {
         //桁数の制限ルールに従って数値を追加
         this.display = this.display + digit;
       }
+      this.syncDisplay();
     });
   }
 
@@ -164,6 +179,7 @@ export class CalculatorComponent {
       if (this.isError === true) {
         this.clearError();
         this.display = '0.';
+        this.syncDisplay();
         return;
       }
       if (this.waitingForSecondValue === true) {
@@ -179,6 +195,7 @@ export class CalculatorComponent {
         //小数点がない時
         this.display = this.display + '.';
       }
+      this.syncDisplay();
     });
   }
   handleoperator(nextOperator: string) {
@@ -222,8 +239,7 @@ export class CalculatorComponent {
           this.firstvalue,
           inputvalue
         );
-        const formatted = this.formatnumber(result);
-        this.display = formatted;
+        this.showDisplay(result);
         this.firstvalue = result;
         this.lastvalue = nextOperator === '/' ? null : inputvalue;
       } else {
@@ -242,6 +258,7 @@ export class CalculatorComponent {
       if (this.isError === true) {
         this.clearError();
         this.display = '0';
+        this.syncDisplay();
         return;
       }
       const newDisplay = this.display.startsWith('-')
@@ -251,7 +268,7 @@ export class CalculatorComponent {
       if (!dec.isFinite()) {
         throw new DomainError();
       }
-      this.display = newDisplay;
+      this.showDisplay(dec);
       if (this.waitingForSecondValue && this.firstvalue !== null) {
         this.firstvalue = dec;
       }
@@ -276,8 +293,7 @@ export class CalculatorComponent {
         this.waitingForSecondValue === false
       ) {
         const result = inputvalue.div(100);
-        const formatted = this.formatnumber(result);
-        this.display = formatted;
+        this.showDisplay(result);
         this.firstvalue = result;
         this.waitingForSecondValue = true;
         this.percentvalue = null;
@@ -290,9 +306,8 @@ export class CalculatorComponent {
         this.reciprocalMode === true
       ) {
         const result = inputvalue.div(100);
-        const formatted = this.formatnumber(result);
+        this.showDisplay(result);
         //状態をクリア
-        this.display = formatted;
         this.firstvalue = result;
         this.percentvalue = null;
         this.startNewCalculation();
@@ -332,8 +347,7 @@ export class CalculatorComponent {
           default:
             throw new Calculator('Error');
         }
-        const formatted = this.formatnumber(result);
-        this.display = formatted;
+        this.showDisplay(result);
         this.waitingForSecondValue = true;
         this.firstvalue = result;
         this.lastvalue =
@@ -343,8 +357,7 @@ export class CalculatorComponent {
         return;
       }
       const result = inputvalue.div(100); //数値だけ％計算をする時
-      const formatted = this.formatnumber(result);
-      this.display = formatted;
+      this.showDisplay(result);
       this.firstvalue = result;
       this.waitingForSecondValue = true;
       this.percentvalue = null;
@@ -368,10 +381,10 @@ export class CalculatorComponent {
         throw new DomainError();
       }
       const rootvalue = inputvalue.sqrt(); //平方根計算式
-      const formatted = this.formatnumber(rootvalue);
+      this.showDisplay(rootvalue);
       if (this.equalpressed === true || this.constantMode === true) {
         //直前＝を押した時(特殊モード用)、新規計算を始める
-        this.display = formatted;
+        this.showDisplay(rootvalue);
         this.firstvalue = rootvalue;
         this.waitingForSecondValue = true;
         this.equalpressed = false;
@@ -380,18 +393,18 @@ export class CalculatorComponent {
       if (this.operator !== null) {
         //通常時
         if (this.waitingForSecondValue === true) {
-          this.display = formatted;
+          this.showDisplay(rootvalue);
           this.lastvalue = rootvalue;
           this.waitingForSecondValue = false;
         } else {
-          this.display = formatted;
+          this.showDisplay(rootvalue);
           this.lastvalue = rootvalue;
         }
         this.equalpressed = false;
         return;
       }
       //個別計算
-      this.display = formatted;
+      this.showDisplay(rootvalue);
       this.firstvalue = rootvalue;
       this.lastvalue = null;
       this.waitingForSecondValue = true;
@@ -426,8 +439,7 @@ export class CalculatorComponent {
         }
         //逆数モードは初回のみ以下で計算
         const result = new Decimal(1).div(inputvalue);
-        const formatted = this.formatnumber(result);
-        this.display = formatted;
+        this.showDisplay(result);
         this.firstvalue = result;
         this.operator = '/';
         this.lastvalue = inputvalue;
@@ -465,8 +477,7 @@ export class CalculatorComponent {
             this.firstvalue,
             secondvalue
           );
-          const formatted = this.formatnumber(result);
-          this.display = formatted;
+          this.showDisplay(result);
           this.firstvalue = result;
           this.waitingForSecondValue = true;
           this.constantMode = true;
@@ -498,8 +509,7 @@ export class CalculatorComponent {
           }
         }
         const result = this.calculate(this.operator, left, right);
-        const formatted = this.formatnumber(result);
-        this.display = formatted;
+        this.showDisplay(result);
         this.firstvalue = result;
         this.waitingForSecondValue = true;
         this.equalpressed = true;
@@ -514,6 +524,7 @@ export class CalculatorComponent {
   clear(): void {
     //クリアを押した時の処理
     this.display = '0';
+    this.exactValue = new Decimal(0);
     this.resetAllState();
   }
   clearEntry(): void {
@@ -526,6 +537,7 @@ export class CalculatorComponent {
 
     if (!this.waitingForSecondValue) {
       this.display = '0';
+      this.exactValue = new Decimal(0);
       this.percentvalue = null;
     }
   }
@@ -566,7 +578,7 @@ export class CalculatorComponent {
       //整数部分が10桁を超えていた時
       const L = integerDigits.length; //整数部分の桁数
       const left = integerDigits.slice(0, this.limits.integer); //左から10桁を取得
-      const boundary = L - 10; //10桁目の位置
+      const boundary = L - this.limits.integer; //10桁目の位置
       const inserPos = Math.min(Math.max(boundary, 1), left.length - 1); //百億と十億の桁の間
       const withDot = left.slice(0, inserPos) + '.' + left.slice(inserPos); //小数点を追加
 
