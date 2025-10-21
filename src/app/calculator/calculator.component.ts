@@ -243,6 +243,16 @@ export class CalculatorComponent {
     //±を切り替える
     this.safely(() => {
       if (this.isError === true) return;
+      if(this.display === '0'||this.display === '-0'){
+        this.display = this.display.startsWith('-')?'0':'-0';
+        this.syncDisplay();
+        return;
+      }
+      if(this.display === '0.'||this.display === '-0.'){
+        this.display = this.display.startsWith('-')?'0.':'-0.';
+        this.syncDisplay();
+        return;
+      }
       const newDisplay = this.display.startsWith('-')
         ? this.display.slice(1)
         : '-' + this.display;
