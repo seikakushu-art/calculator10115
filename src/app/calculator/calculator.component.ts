@@ -195,7 +195,7 @@ export class CalculatorComponent {
       if (this.isError === true) return;
       this.percentvalue = null;
       const inputvalue = this.displayValue; //数値として取得
-      if (
+      if (//=直後に数値と演算子を入力(例：1+2=5+)
         this.firstvalue !== null &&
         this.waitingForSecondValue === false &&
         ((this.equalpressed === true && this.constantMode === true) || //直後に演算子を入力
@@ -209,21 +209,32 @@ export class CalculatorComponent {
         this.resetModes();
         return;
       }
-      //各状態のリセット(通常計算で特殊モードに入らないように)
-      this.resetModes();
-      this.lastvalue = null;
     
-      if (this.waitingForSecondValue === true) {
+      if (this.waitingForSecondValue === true) {//＝直後に演算子が押された(例：1+2=+1)
+        if(this.equalpressed === true){
+          this.resetModes();
+          this.firstvalue = inputvalue;
+          this.operator = nextOperator;
+          this.lastvalue = null;
+          this.waitingForSecondValue = true;
+          this.equalpressed = false;
+          return;
+        }
         if (this.firstvalue !== null && this.operator && this.lastvalue !== null) {
           const result = this.calculate(this.operator, this.firstvalue, this.lastvalue);
           this.showDisplay(result);
           this.firstvalue = result;
         }
+        this.resetModes();
+        this.lastvalue = null;
         //演算子連続押された時
         this.operator = nextOperator;
-        this.reciprocalMode = false;
+        this.waitingForSecondValue = true;
         return;
       }
+      this.resetModes();
+      this.lastvalue = null;
+
       if (this.firstvalue !== null && this.operator) {
         //通常時
         const result = this.calculate(
