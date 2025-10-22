@@ -405,6 +405,7 @@ export class CalculatorComponent {
     //平方根を計算する
     this.safely(() => {
       if (this.isError === true) return;
+      this.percentvalue = null;
       const inputvalue = this.displayValue;
       if (inputvalue.lt(0)) {
         //error発生条件
