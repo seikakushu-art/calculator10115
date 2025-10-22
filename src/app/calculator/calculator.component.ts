@@ -214,6 +214,11 @@ export class CalculatorComponent {
       this.lastvalue = null;
     
       if (this.waitingForSecondValue === true) {
+        if (this.firstvalue !== null && this.operator && this.lastvalue !== null) {
+          const result = this.calculate(this.operator, this.firstvalue, this.lastvalue);
+          this.showDisplay(result);
+          this.firstvalue = result;
+        }
         //演算子連続押された時
         this.operator = nextOperator;
         this.reciprocalMode = false;
@@ -377,6 +382,10 @@ export class CalculatorComponent {
       if (this.equalpressed === true || this.constantMode === true) {
         //直前＝を押した時(特殊モード用)、新規計算を始める
         this.firstvalue = rootvalue;
+        this.operator = null;
+        this.lastvalue = null;
+        this.constantMode = false;
+        this.reciprocalMode = false;
         this.waitingForSecondValue = true;
         this.equalpressed = false;
         return;
