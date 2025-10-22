@@ -228,7 +228,11 @@ export class CalculatorComponent {
         );
         this.showDisplay(result);
         this.firstvalue = result;
-        this.lastvalue = nextOperator === '/' ? null : inputvalue;
+        if(nextOperator === '+'||nextOperator === '-'||nextOperator === '/'){
+        this.lastvalue = null;
+        }else{
+          this.lastvalue = inputvalue;//*の時は前の数値を保持
+        }
       } else {
         this.firstvalue = inputvalue;
         this.lastvalue = null;
@@ -372,7 +376,6 @@ export class CalculatorComponent {
       this.showDisplay(rootvalue);
       if (this.equalpressed === true || this.constantMode === true) {
         //直前＝を押した時(特殊モード用)、新規計算を始める
-        this.showDisplay(rootvalue);
         this.firstvalue = rootvalue;
         this.waitingForSecondValue = true;
         this.equalpressed = false;
@@ -380,19 +383,11 @@ export class CalculatorComponent {
       }
       if (this.operator !== null) {
         //通常時
-        if (this.waitingForSecondValue === true) {
-          this.showDisplay(rootvalue);
           this.lastvalue = rootvalue;
-          this.waitingForSecondValue = false;
-        } else {
-          this.showDisplay(rootvalue);
-          this.lastvalue = rootvalue;
-        }
-        this.equalpressed = false;
-        return;
-      }
-      //個別計算
-      this.showDisplay(rootvalue);
+          this.waitingForSecondValue = true;
+          this.equalpressed = false;
+          return;
+        } 
       this.firstvalue = rootvalue;
       this.lastvalue = null;
       this.waitingForSecondValue = true;
@@ -438,8 +433,10 @@ export class CalculatorComponent {
           this.constantMode && this.waitingForSecondValue === false; //「＝を押した後に新しい数字を打って、さらに＝を押した」かを検出
         if (this.constantMode === false) {
           let secondvalue: Decimal;
-          if (this.waitingForSecondValue === true) {//+-の時だけ第二の数値は0
-            if(this.operator === '+'||this.operator === '-'){
+          if (this.waitingForSecondValue === true) {
+            if(this.lastvalue !== null){
+              secondvalue = this.lastvalue;
+            }else if(this.operator === '+'||this.operator === '-'){//+-の時だけ第二の数値は0
               secondvalue = new Decimal(0);
             }else{
               secondvalue = inputvalue;
