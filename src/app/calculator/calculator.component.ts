@@ -413,8 +413,8 @@ export class CalculatorComponent {
       }
       const rootvalue = inputvalue.sqrt(); //平方根計算式
       this.showDisplay(rootvalue);
-      if (this.equalpressed === true || this.constantMode === true) {
-        //直前＝を押した時(特殊モード用)、新規計算を始める
+      if ((this.equalpressed === true || this.constantMode === true) && this.waitingForSecondValue === true) {
+        //直前＝を押した時、新規計算を始める
         this.firstvalue = rootvalue;
         this.operator = null;
         this.lastvalue = null;
@@ -422,6 +422,9 @@ export class CalculatorComponent {
         this.reciprocalMode = false;
         this.waitingForSecondValue = true;
         this.equalpressed = false;
+        return;
+      }
+      if (this.constantMode === true&&this.waitingForSecondValue === false&&this.operator !== null) {//定数モード中に√を押した時,状態遷移なし
         return;
       }
       if (this.operator !== null) {
