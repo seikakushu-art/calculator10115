@@ -557,16 +557,14 @@ export class CalculatorComponent {
     const integerlength = integerDigits.length; //整数部分の桁数
     if (integerlength > this.limits.integer) {
       //整数部分が10桁を超えていた時
-      const L = integerDigits.length; //整数部分の桁数
-      const left = integerDigits.slice(0, this.limits.integer); //左から10桁を取得
-      const boundary = L - this.limits.integer; //10桁目の位置
-      const inserPos = Math.min(Math.max(boundary, 1), left.length - 1); //百億と十億の桁の間
-      const withDot = left.slice(0, inserPos) + '.' + left.slice(inserPos); //小数点を追加
-
-      const message = 'E' + (isNegative ? '-' : '') + withDot;
-      throw new LimitExceededError(message);
+      const L = integerlength; //整数部分の桁数
+      const first10 = integerDigits.slice(0, this.limits.integer); //左から10桁を取得
+      const boundary = Math.min(Math.max(L - this.limits.integer,1),this.limits.integer - 1);//10桁目の位置
+      const mantissa = first10.slice(0, boundary) + '.' + first10.slice(boundary); //小数点を追加
+      const sign =isNegative ? '-':'' //-を追加
+      throw new LimitExceededError(`E${sign}${mantissa}`);
     }
-    const cleandecimal = decimal.replace(/\.?0+$/, ''); //小数部分の余計な0を削除
+    const cleandecimal = decimal.replace(/0+$/, ''); //小数部分の余計な0を削除
     return cleandecimal ? `${integer}.${cleandecimal}` : integer;
   }
 }
