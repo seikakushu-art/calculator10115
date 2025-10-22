@@ -123,7 +123,7 @@ export class CalculatorComponent {
     }
   }
 
-  private appendDigit(digit: string): boolean {
+  private canAppendDigit(): boolean {
     //桁数の制限ルール
     const integer = this.display.split('.')[0];
     const decimal = this.display.split('.')[1];
@@ -161,7 +161,7 @@ export class CalculatorComponent {
         this.syncDisplay();
         return;
       }
-      if (this.appendDigit(digit) === true) {
+      if (this.canAppendDigit() === true) {
         //桁数の制限ルールに従って数値を追加
         this.display = this.display + digit;
       }
@@ -302,13 +302,8 @@ export class CalculatorComponent {
         this.waitingForSecondValue === true &&
         this.lastvalue === null
       ){
-        const result = inputvalue.div(100);
-        this.showDisplay(result);
-        this.firstvalue = result;
+        this.percentvalue = new Decimal(0);
         this.waitingForSecondValue = true;
-        this.percentvalue = null;
-        this.constantMode = false;
-        this.equalpressed = false;
         return;
       }
       if (this.operator && this.firstvalue !== null) {
