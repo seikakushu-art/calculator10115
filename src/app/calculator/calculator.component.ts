@@ -144,7 +144,12 @@ export class CalculatorComponent {
     //数値が入力された時
     this.safely(() => {
       if (this.isError === true) return;
-      if(this.equalpressed === true&&this.constantMode === true&&this.operator !== null&&this.waitingForSecondValue === false){
+      if (
+        this.equalpressed === true &&
+        this.constantMode === true &&
+        this.operator !== null &&
+        this.waitingForSecondValue === false
+      ) {
         this.display = digit;
         this.equalpressed = false;
         this.syncDisplay();
@@ -186,7 +191,12 @@ export class CalculatorComponent {
     //小数点を入力する
     this.safely(() => {
       if (this.isError === true) return;
-      if(this.equalpressed === true&&this.constantMode === true&&this.operator !== null&&this.waitingForSecondValue === false){
+      if (
+        this.equalpressed === true &&
+        this.constantMode === true &&
+        this.operator !== null &&
+        this.waitingForSecondValue === false
+      ) {
         this.display = '0.';
         this.equalpressed = false;
         this.syncDisplay();
@@ -231,7 +241,8 @@ export class CalculatorComponent {
       }
 
       if (this.waitingForSecondValue === true) {
-        if(this.constantMode === true&&this.equalpressed === false){//%の計算結果を利用した新規計算
+        if (this.constantMode === true && this.equalpressed === false) {
+          //%の計算結果を利用した新規計算
           this.resetModes();
           this.lastvalue = null;
           this.operator = nextOperator;
@@ -248,11 +259,14 @@ export class CalculatorComponent {
           this.equalpressed = false;
           return;
         }
-        const unaryConfirmed  = (this.lastvalue !== null&&this.lastvalue.minus(this.displayValue).isZero());//演算子後の中間計算を判定
+        const unaryConfirmed =
+          this.lastvalue !== null &&
+          this.lastvalue.minus(this.displayValue).isZero(); //演算子後の中間計算を判定
         if (
           this.firstvalue !== null &&
           this.operator &&
-          this.lastvalue !== null&&(unaryConfirmed)
+          this.lastvalue !== null &&
+          unaryConfirmed
         ) {
           const result = this.calculate(
             this.operator,
@@ -304,7 +318,7 @@ export class CalculatorComponent {
     //±を切り替える
     this.safely(() => {
       if (this.isError === true) return;
-      const v =this.displayValue; //表示値が数値的に0なら、文字列だけ符号を反転して同期して終わり
+      const v = this.displayValue; //表示値が数値的に0なら、文字列だけ符号を反転して同期して終わり
       if (v.isZero()) {
         this.display = this.display.startsWith('-')
           ? this.display.slice(1)
@@ -319,13 +333,15 @@ export class CalculatorComponent {
       if (!dec.isFinite()) {
         throw new DomainError();
       }
-      if(this.waitingForSecondValue === true&&this.operator !== null){
-        if(this.lastvalue !== null){//例: 25 + 9 √ の直後に ± → 第二項(= lastvalue) を反転
+      if (this.waitingForSecondValue === true && this.operator !== null) {
+        if (this.lastvalue !== null) {
+          //例: 25 + 9 √ の直後に ± → 第二項(= lastvalue) を反転
           this.lastvalue = dec;
           this.showDisplay(dec);
           this.equalpressed = false;
           return;
-        }else{//例: 3 + の直後に ± → 第一項(= firstvalue) を反転して「+」のままにする
+        } else {
+          //例: 3 + の直後に ± → 第一項(= firstvalue) を反転して「+」のままにする
           this.firstvalue = dec;
           this.showDisplay(dec);
           this.equalpressed = false;
@@ -448,7 +464,10 @@ export class CalculatorComponent {
       }
       const rootvalue = inputvalue.sqrt(); //平方根計算式
       this.showDisplay(rootvalue);
-      if ((this.equalpressed === true || this.constantMode === true) && this.waitingForSecondValue === true) {
+      if (
+        (this.equalpressed === true || this.constantMode === true) &&
+        this.waitingForSecondValue === true
+      ) {
         //直前＝を押した時、新規計算を始める
         this.firstvalue = rootvalue;
         this.operator = null;
@@ -459,7 +478,12 @@ export class CalculatorComponent {
         this.equalpressed = false;
         return;
       }
-      if (this.constantMode === true&&this.waitingForSecondValue === false&&this.operator !== null) {//定数モード中に√を押した時,状態遷移なし
+      if (
+        this.constantMode === true &&
+        this.waitingForSecondValue === false &&
+        this.operator !== null
+      ) {
+        //定数モード中に√を押した時,状態遷移なし
         this.equalpressed = true;
         return;
       }
