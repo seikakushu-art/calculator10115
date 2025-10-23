@@ -72,8 +72,9 @@ export class CalculatorComponent {
 
   private showDisplay(s: Decimal): void {
     //表示する数値だけフォーマット処理
+    const formatted = this.formatnumber(s);
     this.exactValue = s;
-    this.display = this.formatnumber(s);
+    this.display = formatted;
   }
 
   private syncDisplay(): void {
@@ -217,6 +218,13 @@ export class CalculatorComponent {
       }
 
       if (this.waitingForSecondValue === true) {
+        if(this.constantMode === true&&this.equalpressed === false){//%の計算結果を利用した新規計算
+          this.resetModes();
+          this.lastvalue = null;
+          this.operator = nextOperator;
+          this.waitingForSecondValue = true;
+          return;
+        }
         //＝直後に演算子が押された(例：1+2=+1)
         if (this.equalpressed === true) {
           this.resetModes();
