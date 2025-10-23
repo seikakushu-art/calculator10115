@@ -319,6 +319,19 @@ export class CalculatorComponent {
       if (!dec.isFinite()) {
         throw new DomainError();
       }
+      if(this.waitingForSecondValue === true&&this.operator !== null){
+        if(this.lastvalue !== null){//例: 25 + 9 √ の直後に ± → 第二項(= lastvalue) を反転
+          this.lastvalue = dec;
+          this.showDisplay(dec);
+          this.equalpressed = false;
+          return;
+        }else{//例: 3 + の直後に ± → 第一項(= firstvalue) を反転して「+」のままにする
+          this.firstvalue = dec;
+          this.showDisplay(dec);
+          this.equalpressed = false;
+          return;
+        }
+      }
       this.showDisplay(dec);
       if (this.waitingForSecondValue && this.firstvalue !== null) {
         this.firstvalue = dec;
