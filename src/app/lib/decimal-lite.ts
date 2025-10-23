@@ -2,7 +2,7 @@ export default class Decimal {
   static ROUND_DOWN = 0; // 互換用
 
   // 内部小数桁（表示8桁より大きく：中間誤差を抑える）
-  private static readonly INTERNAL_SCALE = 32;
+  private static readonly INTERNAL_SCALE = 64;
   private static readonly TEN_S = Decimal.pow10(Decimal.INTERNAL_SCALE);
 
   private n: bigint; // 値 * 10^INTERNAL_SCALE
