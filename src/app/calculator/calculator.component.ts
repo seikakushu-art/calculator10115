@@ -235,10 +235,11 @@ export class CalculatorComponent {
           this.equalpressed = false;
           return;
         }
+        const unaryConfirmed  = (this.lastvalue !== null&&this.lastvalue.minus(this.displayValue).isZero());//演算子後の中間計算を判定
         if (
           this.firstvalue !== null &&
           this.operator &&
-          this.lastvalue !== null
+          this.lastvalue !== null&&(unaryConfirmed)
         ) {
           const result = this.calculate(
             this.operator,
@@ -597,23 +598,6 @@ export class CalculatorComponent {
     //結果のフォーマットを整える
     if (!num.isFinite()) throw new DomainError();
     const dp = this.limits.decimal;
-    const epsilon = new Decimal(10).pow(-dp).div(2); // 0.5 ULP at dp
-    const nearestInt = num.toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
-    if (num.minus(nearestInt).abs().lte(epsilon)) {
-      const asInt = nearestInt; // ここは整数
-      // 桁あふれチェック
-      const intStr = asInt.toFixed(0);
-      const isNegative = intStr.startsWith('-');
-      const integerlength = intStr.replace('-', '').length;
-      if (integerlength > this.limits.integer) {
-        const digits = intStr.replace('-', '');
-        const sign = isNegative ? '-' : '';
-        const mantissa = digits[0] + '.' + digits.slice(1, this.limits.integer);
-        const exp = integerlength - 1;
-        throw new LimitExceededError(`${sign}${mantissa}e${exp}`);
-      }
-      return intStr; // ← 2 になる
-    }
     const truncated = num.toDecimalPlaces(dp, Decimal.ROUND_DOWN); //-0を排除
     if (truncated.isZero()) {
       return '0';
