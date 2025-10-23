@@ -144,6 +144,13 @@ export class CalculatorComponent {
     //数値が入力された時
     this.safely(() => {
       if (this.isError === true) return;
+      if(this.equalpressed === true&&this.constantMode === true&&this.operator !== null&&this.waitingForSecondValue === false){
+        this.display = digit;
+        this.equalpressed = false;
+        this.syncDisplay();
+        return;
+      }
+
       if (this.waitingForSecondValue === true) {
         //2つ目の数値入力の分岐
         if (this.percentvalue !== null) {
@@ -179,6 +186,12 @@ export class CalculatorComponent {
     //小数点を入力する
     this.safely(() => {
       if (this.isError === true) return;
+      if(this.equalpressed === true&&this.constantMode === true&&this.operator !== null&&this.waitingForSecondValue === false){
+        this.display = '0.';
+        this.equalpressed = false;
+        this.syncDisplay();
+        return;
+      }
       if (this.waitingForSecondValue === true) {
         //数値入力待ちの時
         if (this.percentvalue !== null) {
@@ -434,6 +447,7 @@ export class CalculatorComponent {
         return;
       }
       if (this.constantMode === true&&this.waitingForSecondValue === false&&this.operator !== null) {//定数モード中に√を押した時,状態遷移なし
+        this.equalpressed = true;
         return;
       }
       if (this.operator !== null) {
